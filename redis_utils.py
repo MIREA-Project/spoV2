@@ -17,6 +17,7 @@ async def init_redis():
         db=REDIS_DB,
         decode_responses=True,
     )
+    await _redis_client.ping()
     logging.info("Redis connected")
 
 
