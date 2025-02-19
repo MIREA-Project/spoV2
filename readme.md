@@ -1,41 +1,95 @@
-# FastAPI Authorization with Async Redis
+# Redis Authorization Module
 
-This is an authorization project built with FastAPI and Async Redis for storing and verifying codes. The project includes two endpoints for sending and verifying the code, and uses HMAC for protection against timing attacks.
+Этот проект предоставляет модуль авторизации с использованием Redis и FastAPI. Модуль включает в себя функционал для отправки и проверки кодов верификации, а также управление JWT токенами.
 
-## Description
+## Установка
 
-The project implements two endpoints:
+1. Клонируйте репозиторий:
+    ```sh
+    git clone <URL вашего репозитория>
+    cd redis_authorization
+    ```
 
-1. `/auth` - simulates sending a code to a phone. The code is printed to the console and saved in Redis.
-2. `/verify_code` - verifies the entered code using HMAC (to protect against timing attacks).
+2. Установите зависимости:
+    ```sh
+    pip install -r requirements.txt
+    ```
 
-The project uses:
+3. Настройте переменные окружения:
+    Создайте файл `.env` в корне проекта и добавьте следующие переменные:
+    ```env
+    REDIS_HOST=<ваш_redis_host>
+    REDIS_PORT=<ваш_redis_port>
+    ```
 
-- **FastAPI** for developing the API.
-- **Async Redis** for asynchronous Redis operations.
-- **Pydantic** for data validation.
-- **HMAC (compare_digest)** for protection against timing attacks.
-- **dotenv** for loading environment variables (e.g., `REDIS_HOST` and `REDIS_PORT`).
+## Запуск
 
-## Installation
+1. Запустите приложение:
+    ```sh
+    uvicorn main:app --reload
+    ```
 
-To run the project, Python 3.7 or higher is required.
+2. Откройте браузер и перейдите по адресу [http://localhost:8000/docs](http://localhost:8000/docs) для доступа к документации Swagger.
 
-1. Clone the repository:
+## Структура проекта
 
-   ```bash
-   git clone https://github.com/your-username/fastapi-authorization.git
-   cd fastapi-authorization
-   ```
-2. Activate Venv and install the dependencies
-   ```bash
-   pip install -r requirements.txt
-   ```
-3.	Create a .env file and add the Redis connection parameters:
-     REDIS_HOST=localhost
-     REDIS_PORT=6379
-4. Run the project:
-     ```bash
-     uvicorn main:app --reload
-     ```
-The application will be available at http://localhost:8000.
+- `main.py`: Основной файл для запуска FastAPI приложения.
+- `redis_initializer.py`: Инициализация и управление подключением к Redis.
+- `reg_module/`: Пакет, содержащий основной функционал модуля авторизации.
+  - `routes.py`: Определение маршрутов для авторизации.
+  - `schemas.py`: Определение Pydantic схем для валидации данных.
+  - `utils.py`: Утилиты для создания и отправки кодов верификации.
+  - `jwt_module/`: Подпакет для работы с JWT токенами.
+    - `jwt_schemas.py`: Определение типов токенов.
+    - `creator.py`: Функции для создания JWT токенов.
+    - `depends.py`: Зависимости для работы с JWT токенами.
+  - `core/`: Основные настройки и конфигурации.
+    - `config.py`: Загрузка конфигураций.
+
+## Маршруты
+
+### POST /auth
+
+Отправка кода верификации на указанный номер телефона.
+
+**Параметры:**
+- `phone_number` (формат: `+7123456789`)
+
+**Ответ:**
+- `200 OK`: Код верификации успешно отправлен.
+
+### GET /verify_code
+
+Проверка кода верификации и выдача JWT токенов.
+
+**Параметры:**
+- `code` (6-значный код)
+- `phone_number` (формат: `+7123456789`)
+
+**Ответ:**
+- `200 OK`: Аутентификация успешна, токены установлены в cookies.
+
+### GET /refresh_token
+
+Обновление access токена с использованием refresh токена.
+
+**Ответ:**
+- `200 OK`: Новый access токен установлен в cookies.
+
+### GET /logout
+
+Выход из системы, удаление токенов из cookies.
+
+**Ответ:**
+- `200 OK`: Токены удалены.
+
+### GET /protected
+
+Пример защищенного маршрута.
+
+**Ответ:**
+- `200 OK`: Статус успешен.
+
+## Лицензия
+
+Этот проект лицензирован под лицензией MIT. Подробности см. в файле `LICENSE`.
