@@ -3,9 +3,9 @@ import datetime
 import jwt
 from fastapi import Depends, HTTPException, status, Request
 
-import schemas
+from .. import schemas
 from . import jwt_schemas
-from core.config import load_config
+from reg_module.core.config import load_config
 
 config = load_config()
 
@@ -49,7 +49,7 @@ def get_user_id_from_refresh_token(
         refresh_token: str = Depends(_get_refresh_token_from_cookies),
 ) -> int:
     try:
-        payload: dict = jwt.decode(refresh_token, config.jwt.public_key_path.read_text(),
+        payload: dict = jwt.decode(refresh_token, config.jwt.public_key_path,
                                    algorithms=[config.jwt.algorithm])
     except jwt.InvalidTokenError:
         raise HTTPException(
@@ -81,7 +81,7 @@ def get_user_from_token(
         token: str = Depends(_get_access_token_from_cookie),
 ) -> schemas.User:
     try:
-        payload: dict = jwt.decode(token, config.jwt.public_key_path.read_text(), algorithms=[config.jwt.algorithm])
+        payload: dict = jwt.decode(token, config.jwt.public_key_path, algorithms=[config.jwt.algorithm])
     except jwt.InvalidTokenError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

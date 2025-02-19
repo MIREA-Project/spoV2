@@ -3,7 +3,7 @@ import random
 
 from redis.asyncio import Redis
 
-from core.config import Config, load_config
+from .core.config import Config, load_config
 
 config: Config = load_config()
 

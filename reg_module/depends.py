@@ -3,7 +3,7 @@ from typing import Annotated
 
 from pydantic import ValidationError
 
-import schemas
+from . import schemas
 
 
 def get_form_data(

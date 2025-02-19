@@ -1,8 +1,8 @@
 import datetime
 
-import schemas
+from .. import schemas
 from . import jwt_schemas
-from core.config import load_config
+from reg_module.core.config import load_config
 
 import jwt
 
@@ -24,7 +24,7 @@ def create_access_token(
     }
     return jwt.encode(
         payload=jwt_payload,
-        key=config.jwt.private_key_path.read_text(),
+        key=config.jwt.private_key_path,
         algorithm=config.jwt.algorithm,
     )
 
@@ -42,6 +42,6 @@ def create_refresh_token(
     }
     return jwt.encode(
         payload=jwt_payload,
-        key=config.jwt.private_key_path.read_text(),
+        key=config.jwt.private_key_path,
         algorithm=config.jwt.algorithm,
     )

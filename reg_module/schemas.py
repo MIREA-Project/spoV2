@@ -1,15 +1,14 @@
 from pydantic import BaseModel, field_validator
 import re
 
-"""
-remake assertions to ValueError with explanation
-"""
+
 class PhoneNumber(BaseModel):
     phone_number: str
 
     @field_validator('phone_number')
     def validate_phone_number(cls, value):
-        assert re.fullmatch(r"\+7\d{10}", value)
+        if not re.fullmatch(r"\+7\d{10}", value):
+            raise ValueError("Phone number must be entered in the format: +7123456789")
         return value
 
 
@@ -28,5 +27,6 @@ class UserAuthInfo(BaseModel):
 
     @field_validator("code")
     def validate_code(cls, value):
-        assert re.fullmatch(r"\d{6}", str(value))
+        if not re.fullmatch(r"\d{6}", str(value)):
+            raise ValueError("Code must be 6-digit number")
         return value
