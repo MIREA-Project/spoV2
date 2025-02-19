@@ -7,6 +7,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 class AuthJWT(BaseModel):
+    """
+    base config for jwt information
+    """
     public_key_path: str
     private_key_path: str
     algorithm: str
@@ -28,6 +31,10 @@ class Config(BaseModel):
 
 
 def load_config() -> Config:
+    """
+    return config in modules that requires settings
+    :return: config with all parameters
+    """
     return Config(
         verification_code_time_expiration=60 * 5,
         project_host="http://localhost:8000",

@@ -12,6 +12,11 @@ config = load_config()
 def create_access_token(
         user: schemas.User,
 ) -> str:
+    """
+    function creates access token using user payload
+    :param user: user schema, not orm model
+    :return: signed jwt access token(with use payload)
+    """
     now = datetime.datetime.now(datetime.UTC)
     jwt_payload = {
         "sub": str(user.id),
@@ -32,6 +37,11 @@ def create_access_token(
 def create_refresh_token(
         user_id: int
 ) -> str:
+    """
+    function update access token using user id
+    :param user_id: uses for jwt sub
+    :return: signed refresh jwt token
+    """
     now = datetime.datetime.now(datetime.UTC)
     jwt_payload = {
         "sub": str(user_id),
