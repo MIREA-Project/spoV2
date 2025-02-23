@@ -1,15 +1,5 @@
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_validator, EmailStr
 import re
-
-
-class PhoneNumber(BaseModel):
-    phone_number: str
-
-    @field_validator('phone_number')
-    def validate_phone_number(cls, value):
-        if not re.fullmatch(r"\+7\d{10}", value):
-            raise ValueError("Phone number must be entered in the format: +7123456789")
-        return value
 
 
 class SuccessMessageSend(BaseModel):
@@ -18,12 +8,12 @@ class SuccessMessageSend(BaseModel):
 
 class User(BaseModel):
     id: int
-    phone_number: PhoneNumber
+    email: EmailStr
 
 
 class UserAuthInfo(BaseModel):
     code: int
-    phone_number: PhoneNumber
+    email: EmailStr
 
     @field_validator("code")
     def validate_code(cls, value):

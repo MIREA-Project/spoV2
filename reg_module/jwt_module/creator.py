@@ -2,7 +2,7 @@ import datetime
 
 from .. import schemas
 from . import jwt_schemas
-from reg_module.core.config import load_config
+from core.config import load_config
 
 import jwt
 
@@ -20,7 +20,7 @@ def create_access_token(
     now = datetime.datetime.now(datetime.UTC)
     jwt_payload = {
         "sub": str(user.id),
-        "phone_number": user.phone_number.phone_number,
+        "email": user.email,
         "exp": now + datetime.timedelta(
             minutes=config.jwt.access_token_expire_minutes
         ),

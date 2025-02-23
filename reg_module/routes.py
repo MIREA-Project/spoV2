@@ -4,9 +4,8 @@ import random
 
 from fastapi import Depends, status, HTTPException, Response, APIRouter
 from redis.asyncio import Redis
-
+from pydantic import EmailStr
 from . import schemas
-from .depends import get_form_data, validate_code
 from redis_initializer import get_redis
 from .jwt_module import jwt_schemas
 from .jwt_module.creator import create_access_token, create_refresh_token
@@ -18,23 +17,21 @@ router: APIRouter = APIRouter(
     tags=["auth"]
 )
 
-database: dict[int, schemas.User] = {}
-
 
 @router.post('/auth')
 async def auth_user(
-        phone_number: schemas.PhoneNumber = Depends(get_form_data),
+        email: EmailStr,
         redis_client: Redis = Depends(get_redis)
 ) -> schemas.SuccessMessageSend:
     """
     first authorization router, user enter phone number and will receive 6-digits code
-    :param phone_number: validated phone number
     :param redis_client: redis connection
+    :param email: user validated email string
     :return: success message
     :raise HTTPException with 500(some gone wrong)
     """
     try:
-        await send_verification_code(phone_number.phone_number, redis_client)
+        await send_verification_code(email, redis_client)
         return schemas.SuccessMessageSend(
             message="Verification code sent successfully",
         )
@@ -46,7 +43,7 @@ async def auth_user(
 @router.get("/verify_code")
 async def verify_code(
         response: Response,
-        user_auth_info: schemas.UserAuthInfo = Depends(validate_code),
+        user_auth_info: schemas.UserAuthInfo,
         redis_client: Redis = Depends(get_redis)
 ):
     """
@@ -61,7 +58,7 @@ async def verify_code(
     """
     # get code from redis using phone number
     backend_code_from_user = await redis_client.get(
-        user_auth_info.phone_number.phone_number
+        user_auth_info.email
     )
     if backend_code_from_user is None:
         raise HTTPException(
@@ -71,13 +68,14 @@ async def verify_code(
     # using to avoid time attack
     if hmac.compare_digest(backend_code_from_user, str(user_auth_info.code)):
         # delete code from redis
-        await redis_client.delete(user_auth_info.phone_number.phone_number)
+        await redis_client.delete(user_auth_info.email)
         # insert or get user from db
         user = schemas.User(
             id=random.randint(0, 10 ** 6),
-            phone_number=user_auth_info.phone_number,
+            email=user_auth_info.email,
         )
-        database[user.id] = user
+        #### CRUD USER SAVER
+        # database[user.id] = user
 
         # user auth success!
         # create jwt tokens
@@ -117,7 +115,8 @@ async def get_new_access_token(
     :return: None (set new access token in cookies)
     """
     # get user from database
-    user = database[user_id]
+    ### CRUD USER GETTER
+    # user = database[user_id]
 
     # set jwt
     access_token = create_access_token(user=user)

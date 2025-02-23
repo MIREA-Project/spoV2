@@ -1,11 +1,12 @@
 import logging
 import random
 
+from email_module.tasks import send_verification_code_by_smtp
 from redis.asyncio import Redis
 
-from .core.config import Config, load_config
+from core.config import load_config
 
-config: Config = load_config()
+config = load_config()
 
 
 def create_verification_code() -> int:
@@ -17,24 +18,28 @@ def create_verification_code() -> int:
 
 
 async def send_verification_code(
-        phone_number: str,
+        email: str,
         redis: Redis
 ) -> int:
     """
     imitate smtp sender code
-    :param phone_number:
-    :param redis:
-    :return:
+    :param email: validated user email
+    :param redis: async redis client
+    :return: verification code
     """
     code_to_user = create_verification_code()
     # imitate sms
     try:
         await redis.setex(
-            name=phone_number,
+            name=email,
             time=config.verification_code_time_expiration,
             value=code_to_user
         )
-        print(f"Successfully sent verification code {code_to_user} to {phone_number}")
+        send_verification_code_by_smtp(
+            email=email,
+            auth_code=code_to_user
+        )
+        # print(f"Successfully sent verification code {code_to_user} to {phone_number}")
         return code_to_user
-    except Exception as err:
+    except Exception:
         logging.exception("Failed to send verification code")

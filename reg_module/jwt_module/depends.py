@@ -5,7 +5,7 @@ from fastapi import Depends, HTTPException, status, Request
 
 from .. import schemas
 from . import jwt_schemas
-from reg_module.core.config import load_config
+from core.config import load_config
 
 config = load_config()
 
@@ -123,6 +123,5 @@ def get_user_from_token(
     _validate_access_token_payload(payload)
     return schemas.User(
         id=payload["sub"],
-        phone_number=schemas.PhoneNumber(phone_number=payload["phone_number"]),
-
-    )
+        email=payload["email"]
+    ),
