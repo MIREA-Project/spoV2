@@ -1,9 +1,16 @@
-from sqlalchemy import Column, String, Integer, CheckConstraint, BigInteger, String, Boolean, ForeignKey, TIMESTAMP
+import datetime
+
+from sqlalchemy import Column, String, BigInteger, DateTime, Integer
 
 from db import Base
-
 
 class User(Base):
     __tablename__ = 'users'
 
-    id = Column(BigInteger, primary_key=True)
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    nickname = Column(String(20), nullable=False)
+    password_hash = Column(String)
+    email = Column(String)
+    created_at = Column(DateTime, default=lambda: datetime.datetime.now())
+    correct_vote_count = Column(Integer, default=0)
+    score = Column(Integer, default=0)

@@ -7,7 +7,7 @@ from db import Base
 class Questions(Base):
     __tablename__ = 'questions'
 
-    id = Column(BigInteger, primary_key=True)
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
     creator_id = Column(BigInteger, ForeignKey('users.id'))
     title = Column(String(50), nullable=False)
     description = Column(String, nullable=True)
@@ -16,7 +16,7 @@ class Questions(Base):
 class QuestionTypes(Base):
     __tablename__ = 'question_types'
 
-    id = Column(BigInteger, primary_key=True)
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
     name = Column(String(20), nullable=False)
 
 class Question_settings(Base):
