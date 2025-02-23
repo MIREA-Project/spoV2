@@ -19,7 +19,7 @@ class QuestionTypes(Base):
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     name = Column(String(20), nullable=False)
 
-class Question_settings(Base):
+class QuestionSettings(Base):
     __tablename__ = 'question_settings'
 
     question_id = Column(BigInteger, ForeignKey('questions.id'), primary_key=True)
