@@ -5,8 +5,9 @@ import uvicorn
 from fastapi import FastAPI
 from starlette.responses import RedirectResponse
 
+from db import init_models
 from redis_initializer import init_redis, close_redis
-from reg_module.routes import router
+from modules.reg_module.routes import router
 
 
 @asynccontextmanager
@@ -16,6 +17,7 @@ async def lifespan(app: FastAPI):
         format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
     )
     await init_redis()
+    await init_models()
     yield
     await close_redis()
 
