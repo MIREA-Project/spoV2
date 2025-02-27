@@ -11,6 +11,6 @@ class User(Base):
     nickname = Column(String(20), nullable=False)
     password_hash = Column(String)
     email = Column(String)
-    created_at = Column(DateTime, default=lambda: datetime.datetime.now())
+    created_at = Column(DateTime, default=datetime.datetime.now)
     correct_vote_count = Column(Integer, default=0)
     score = Column(Integer, default=0)

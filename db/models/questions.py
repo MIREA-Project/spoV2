@@ -8,10 +8,10 @@ class Questions(Base):
     __tablename__ = 'questions'
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
-    creator_id = Column(BigInteger, ForeignKey('users.id'))
+    creator_id = Column(BigInteger, ForeignKey('users.id', ondelete='CASCADE'))
     title = Column(String(50), nullable=False)
     description = Column(String, nullable=True)
-    created_at = Column(DateTime, default=lambda: datetime.datetime.now())
+    created_at = Column(DateTime, default=datetime.datetime.now)
 
 class QuestionTypes(Base):
     __tablename__ = 'question_types'
@@ -22,8 +22,8 @@ class QuestionTypes(Base):
 class QuestionSettings(Base):
     __tablename__ = 'question_settings'
 
-    question_id = Column(BigInteger, ForeignKey('questions.id'), primary_key=True)
-    type_id = Column(BigInteger, ForeignKey('question_types.id'))
-    expires_at = Column(DateTime, default= lambda: datetime.datetime.now() + datetime.timedelta(weeks=1)) # конец через 1 неделю
+    question_id = Column(BigInteger, ForeignKey('questions.id', ondelete='CASCADE'), primary_key=True)
+    type_id = Column(BigInteger, ForeignKey('question_types.id', ondelete='SET NULL'))
+    expires_at = Column(DateTime, nullable=True)
     is_anonymous = Column(Boolean, default=False, nullable=False)
     is_closed = Column(Boolean, default=False, nullable=False)
