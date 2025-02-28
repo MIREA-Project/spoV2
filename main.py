@@ -9,6 +9,7 @@ from strawberry.fastapi import GraphQLRouter
 
 import uvicorn
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import RedirectResponse
 from db.models import *
 from db import init_models
@@ -35,6 +36,14 @@ app = FastAPI(
         "displayRequestDuration": True,  # Показать длительность запросов
     }
 )
+
+app.add_middleware(
+        CORSMiddleware, 
+        allow_origins=["*"],
+        allow_crenditials=True,
+        allow_methods=["*"],
+        allow_headers=["*"]
+        )
 app.include_router(router)
 # Монтируем GraphQL роутер в FastAPI
 # Создаем схему GraphQL
@@ -58,5 +67,7 @@ async def redirect_to_doc():
     return RedirectResponse(url="/docs")
 
 
+
 if __name__ == '__main__':
-    uvicorn.run(app)
+    uvicorn.run(app, host="192.168.1.167", port=80)
+
