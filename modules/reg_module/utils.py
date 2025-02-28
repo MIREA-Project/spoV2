@@ -1,7 +1,7 @@
 import logging
 import random
 
-from email_module.tasks import send_verification_code_by_smtp
+from email_sender_tasks.tasks import send_verification_code_by_smtp
 from redis.asyncio import Redis
 
 from core.config import load_config
