@@ -49,8 +49,8 @@ def load_config() -> Config:
         verification_code_time_expiration=60 * 5,
         project_host="http://localhost:8000",
         jwt=AuthJWT(
-            public_key_path=Path(os.path.join(BASE_DIR.parent, "certs", "jwt-public.pem")).read_text(),
-            private_key_path=Path(os.path.join(BASE_DIR.parent, "certs", "jwt-private.pem")).read_text(),
+            public_key_path=Path(os.path.join(BASE_DIR, "certs", "jwt-public.pem")).read_text(),
+            private_key_path=Path(os.path.join(BASE_DIR, "certs", "jwt-private.pem")).read_text(),
             algorithm="RS256",
             access_token_expire_minutes=5,
             refresh_token_expire_days=10,
