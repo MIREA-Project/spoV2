@@ -38,12 +38,12 @@ app = FastAPI(
 )
 
 app.add_middleware(
-        CORSMiddleware, 
-        allow_origins=["*"],
-        allow_crenditials=True,
-        allow_methods=["*"],
-        allow_headers=["*"]
-        )
+         CORSMiddleware,
+    allow_origins=['*'],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"]
+    )
 app.include_router(router)
 # Монтируем GraphQL роутер в FastAPI
 # Создаем схему GraphQL
@@ -69,5 +69,5 @@ async def redirect_to_doc():
 
 
 if __name__ == '__main__':
-    uvicorn.run(app, host="192.168.1.167", port=80)
+    uvicorn.run(app, host="192.168.1.167", port=60575)
 
