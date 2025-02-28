@@ -29,7 +29,7 @@ async def add_new_user(
 ) -> schemas.SuccessMessageSend:
     try:
         if new_user := await db.create_user(user_model, session):
-            await send_verfication_code(new_user.email, redis_client)
+            await send_verification_code(new_user.email, redis_client)
             return schemas.SuccessMessageSend(
                 message="Verification code sent successfully",
             )
