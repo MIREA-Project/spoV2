@@ -24,6 +24,7 @@ def create_access_token(
         "exp": now + datetime.timedelta(
             minutes=config.jwt.access_token_expire_minutes
         ),
+        "nickname" : user.nickname,
         "iat": now,
         config.jwt.token_type_field: jwt_schemas.TokenType.access_token.value,
     }
