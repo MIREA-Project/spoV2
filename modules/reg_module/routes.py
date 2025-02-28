@@ -1,16 +1,19 @@
 import hmac
 import logging
-import random
 
 from fastapi import Depends, status, HTTPException, Response, APIRouter
 from redis.asyncio import Redis
-from pydantic import EmailStr
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from db import get_session, models
 from . import schemas
 from redis_initializer import get_redis
+from .depends import get_user_login_schema
 from .jwt_module import jwt_schemas
 from .jwt_module.creator import create_access_token, create_refresh_token
 from .jwt_module.depends import get_user_from_token, get_user_id_from_refresh_token
 from .utils import send_verification_code
+from . import crud as db
 
 router: APIRouter = APIRouter(
     prefix="/auth",
@@ -18,20 +21,40 @@ router: APIRouter = APIRouter(
 )
 
 
-@router.post('/auth')
+@router.post("/registration")
+async def add_new_user(
+        user_model: schemas.UserRegisterInfo,
+        redis_client: Redis = Depends(get_redis),
+        session: AsyncSession = Depends(get_session)
+) -> schemas.SuccessMessageSend:
+    try:
+        if new_user := await db.create_user(user_model, session):
+            await send_verfication_code(new_user.email, redis_client)
+            return schemas.SuccessMessageSend(
+                message="Verification code sent successfully",
+            )
+    except Exception:
+        logging.exception("Failed to add new user")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cant create user"
+        )
+
+
+@router.post('/login')
 async def auth_user(
-        email: EmailStr,
+        user_login_form_data: schemas.UserLoginInfo = Depends(get_user_login_schema),
         redis_client: Redis = Depends(get_redis)
 ) -> schemas.SuccessMessageSend:
     """
     first authorization router, user enter phone number and will receive 6-digits code
     :param redis_client: redis connection
-    :param email: user validated email string
+    :param user_login_form_data
     :return: success message
     :raise HTTPException with 500(some gone wrong)
     """
     try:
-        await send_verification_code(email, redis_client)
+        await send_verification_code(user_login_form_data.email, redis_client)
         return schemas.SuccessMessageSend(
             message="Verification code sent successfully",
         )
@@ -40,66 +63,71 @@ async def auth_user(
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-@router.get("/verify_code")
+@router.post("/verify_code")
 async def verify_code(
         response: Response,
         user_auth_info: schemas.UserAuthInfo,
-        redis_client: Redis = Depends(get_redis)
-):
+        redis_client: Redis = Depends(get_redis),
+        session: AsyncSession = Depends(get_session)
+) -> schemas.SuccessMessageSend:
     """
     second authorization handler, user has received the code, and will enter it to form with code
     set cookies with access and refresh token with httpOnly
     :param response: base fastapi response
     :param user_auth_info: validated user information
     :param redis_client: redis connection
+    :param session: sqlalchemy session
     :return: None(only set cookies)
     :raise HTTPException 410 (when code not found in redis)
     :raise HTTPException 403 (when code is wrong)
     """
-    # get code from redis using phone number
+    # get code from redis using email
     backend_code_from_user = await redis_client.get(
         user_auth_info.email
     )
     if backend_code_from_user is None:
         raise HTTPException(
-            status_code=status.HTTP_410_GONE,
+            status_code=status.HTTP_403_FORBIDDEN,
             detail="Code lifetime is expired"
         )
     # using to avoid time attack
-    if hmac.compare_digest(backend_code_from_user, str(user_auth_info.code)):
-        # delete code from redis
-        await redis_client.delete(user_auth_info.email)
-        # insert or get user from db
-        user = schemas.User(
-            id=random.randint(0, 10 ** 6),
-            email=user_auth_info.email,
+    if not hmac.compare_digest(backend_code_from_user, str(user_auth_info.code)):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail='Wrong code'
         )
-        #### CRUD USER SAVER
-        # database[user.id] = user
-
-        # user auth success!
-        # create jwt tokens
-        access_token: str = create_access_token(user=user)
-        refresh_token: str = create_refresh_token(user.id)
-
-        # set jwt tokens in cookies
-        response.set_cookie(
-            key=jwt_schemas.TokenType.access_token.value,
-            value=access_token,
-            httponly=True,
-            secure=False,  # MAKE TRUE ON PRODUCTION
+    # delete code from redis
+    await redis_client.delete(user_auth_info.email)
+    # get user from db
+    try:
+        user: models.User = await db.get_user(user_auth_info.email, session)
+    except Exception:
+        logging.exception("Erorr while get user while code verifying")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Something went wrong while code verification"
         )
-        response.set_cookie(
-            key=jwt_schemas.TokenType.refresh_token.value,
-            value=refresh_token,
-            httponly=True,
-            secure=False,  # MAKE TRUE ON PRODUCTION
-        )
-        return {"message": "auth success"}
+    print(user)
+    # user auth success!
+    # create jwt tokens
+    access_token: str = create_access_token(user=schemas.User(**user.__dict__))
+    refresh_token: str = create_refresh_token(user.id)
 
-    raise HTTPException(
-        status_code=status.HTTP_403_FORBIDDEN,
-        detail='Wrong code'
+    # set jwt tokens in cookies
+    response.set_cookie(
+        key=jwt_schemas.TokenType.access_token.value,
+        value=access_token,
+        httponly=True,
+        secure=False,  # MAKE TRUE ON PRODUCTION
+    )
+    response.set_cookie(
+        key=jwt_schemas.TokenType.refresh_token.value,
+        value=refresh_token,
+        httponly=True,
+        secure=False,  # MAKE TRUE ON PRODUCTION
+    )
+    return schemas.SuccessMessageSend(
+        message="Auth success, cookies was set!",
     )
 
 

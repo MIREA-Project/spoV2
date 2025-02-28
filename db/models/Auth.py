@@ -9,7 +9,7 @@ class User(Base):
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     nickname = Column(String(20), nullable=False)
-    password_hash = Column(String)
+    password = Column(String)
     email = Column(String)
     created_at = Column(DateTime, default=datetime.datetime.now)
     correct_vote_count = Column(Integer, default=0)

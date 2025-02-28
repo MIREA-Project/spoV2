@@ -123,5 +123,6 @@ def get_user_from_token(
     _validate_access_token_payload(payload)
     return schemas.User(
         id=payload["sub"],
-        email=payload["email"]
-    ),
+        email=payload["email"],
+        nickname=payload["nickname"],
+    )

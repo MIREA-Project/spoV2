@@ -37,7 +37,7 @@ app = FastAPI(
 app.add_middleware(
         CORSMiddleware, 
         allow_origins=["*"],
-        allow_crenditials=True,
+        allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"]
         )
@@ -56,5 +56,5 @@ async def redirect_to_doc():
 
 
 if __name__ == '__main__':
-    uvicorn.run(app, host="192.168.1.167", port=80)
+    uvicorn.run(app, host="localhost", port=8000)
 

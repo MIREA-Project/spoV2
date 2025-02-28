@@ -1,5 +1,6 @@
 import logging
 import random
+import bcrypt
 
 from email_sender_tasks.tasks import send_verification_code_by_smtp
 from redis.asyncio import Redis
@@ -7,6 +8,14 @@ from redis.asyncio import Redis
 from core.config import load_config
 
 config = load_config()
+
+
+def get_password_hash(password: str) -> str:
+    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
+
+def verify_password(password_to_check: str, password_hash: str) -> bool:
+    return bcrypt.checkpw(password_to_check.encode('utf-8'), password_hash.encode('utf-8'))
 
 
 def create_verification_code() -> int:
@@ -39,7 +48,7 @@ async def send_verification_code(
             email=email,
             auth_code=code_to_user
         )
-        # print(f"Successfully sent verification code {code_to_user} to {phone_number}")
+        print(f"Successfully sent verification code {code_to_user} to {email}")
         return code_to_user
     except Exception:
         logging.exception("Failed to send verification code")
