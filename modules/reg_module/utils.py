@@ -1,11 +1,13 @@
-import logging
 import random
 import bcrypt
 
-from email_sender_tasks.tasks import send_verification_code_by_smtp
-from redis.asyncio import Redis
+import smtplib
+from email.mime.text import MIMEText
+import logging
 
+from core.celery_config import celery
 from core.config import load_config
+from redis_initializer import get_redis
 
 config = load_config()
 
@@ -26,20 +28,20 @@ def create_verification_code() -> int:
     return random.randint(100_000, 999_999)
 
 
-async def send_verification_code(
+@celery.task
+def send_verification_code(
         email: str,
-        redis: Redis
 ) -> int:
     """
-    imitate smtp sender code
+    creating code, save it to redis, call smtp sender function
     :param email: validated user email
-    :param redis: async redis client
     :return: verification code
     """
+    redis = get_redis()
     code_to_user = create_verification_code()
     # imitate sms
     try:
-        await redis.setex(
+        redis.setex(
             name=email,
             time=config.verification_code_time_expiration,
             value=code_to_user
@@ -52,3 +54,30 @@ async def send_verification_code(
         return code_to_user
     except Exception:
         logging.exception("Failed to send verification code")
+
+
+def send_verification_code_by_smtp(email: str, auth_code: int) -> None:
+    """
+    отправляет код по email
+
+    :param auth_code: 6-digits code
+    :param email: user validated email
+    :return:
+    """
+    # Создаем email-сообщение
+    msg = MIMEText(f"Ваш код подтверждения: {auth_code}")
+    msg["Subject"] = "Код подтверждения"
+    msg["From"] = config.smtp.SMTP_USER
+    msg["To"] = email
+    logging.info("Я начал отправку по email!")
+    # Отправляем email
+    try:
+        with smtplib.SMTP(
+                config.smtp.SMTP_SERVER,
+                config.smtp.SMTP_PORT
+        ) as server:
+            server.starttls()
+            server.login(config.smtp.SMTP_USER, config.smtp.SMTP_PASSWORD)
+            server.sendmail(config.smtp.SMTP_USER, email, msg.as_string())
+    except Exception:
+        logging.exception("Error while sending verification code")

@@ -18,7 +18,7 @@ async def lifespan(app: FastAPI):
         level=logging.DEBUG,
         format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
     )
-    await init_redis()
+    init_redis()
     await init_models()
     yield
     await close_redis()

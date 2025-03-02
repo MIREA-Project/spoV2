@@ -2,12 +2,12 @@ import hmac
 import logging
 
 from fastapi import Depends, status, HTTPException, Response, APIRouter
-from redis.asyncio import Redis
+from redis import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db import get_session, models
-from . import schemas
 from redis_initializer import get_redis
+from . import schemas
 from .depends import get_user_login_schema
 from .jwt_module import jwt_schemas
 from .jwt_module.creator import create_access_token, create_refresh_token
@@ -24,12 +24,11 @@ router: APIRouter = APIRouter(
 @router.post("/registration")
 async def add_new_user(
         user_model: schemas.UserRegisterInfo,
-        redis_client: Redis = Depends(get_redis),
         session: AsyncSession = Depends(get_session)
 ) -> schemas.SuccessMessageSend:
     try:
         if new_user := await db.create_user(user_model, session):
-            await send_verification_code(new_user.email, redis_client)
+            send_verification_code.delay(new_user.email)
             return schemas.SuccessMessageSend(
                 message="Verification code sent successfully",
             )
@@ -44,19 +43,17 @@ async def add_new_user(
 @router.post('/login')
 async def auth_user(
         user_login_form_data: schemas.UserLoginInfo = Depends(get_user_login_schema),
-        redis_client: Redis = Depends(get_redis)
 ) -> schemas.SuccessMessageSend:
     """
     first authorization router, user enter phone number and will receive 6-digits code
-    :param redis_client: redis connection
     :param user_login_form_data
     :return: success message
     :raise HTTPException with 500(some gone wrong)
     """
     try:
-        await send_verification_code(user_login_form_data.email, redis_client)
+        send_verification_code.delay(user_login_form_data.email)
         return schemas.SuccessMessageSend(
-            message="Verification code sent successfully",
+            message="Send verification code successfully",
         )
     except Exception:
         logging.exception("Exception")
@@ -67,7 +64,6 @@ async def auth_user(
 async def verify_code(
         response: Response,
         user_auth_info: schemas.UserAuthInfo,
-        redis_client: Redis = Depends(get_redis),
         session: AsyncSession = Depends(get_session)
 ) -> schemas.SuccessMessageSend:
     """
@@ -75,14 +71,14 @@ async def verify_code(
     set cookies with access and refresh token with httpOnly
     :param response: base fastapi response
     :param user_auth_info: validated user information
-    :param redis_client: redis connection
     :param session: sqlalchemy session
     :return: None(only set cookies)
     :raise HTTPException 410 (when code not found in redis)
     :raise HTTPException 403 (when code is wrong)
     """
+    redis_client = get_redis()
     # get code from redis using email
-    backend_code_from_user = await redis_client.get(
+    backend_code_from_user = redis_client.get(
         user_auth_info.email
     )
     if backend_code_from_user is None:
@@ -97,7 +93,7 @@ async def verify_code(
             detail='Wrong code'
         )
     # delete code from redis
-    await redis_client.delete(user_auth_info.email)
+    redis_client.delete(user_auth_info.email)
     # get user from db
     try:
         user: models.User = await db.get_user(user_auth_info.email, session)
@@ -107,7 +103,6 @@ async def verify_code(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Something went wrong while code verification"
         )
-    print(user)
     # user auth success!
     # create jwt tokens
     access_token: str = create_access_token(user=schemas.User(**user.__dict__))
