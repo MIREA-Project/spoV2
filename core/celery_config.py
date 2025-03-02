@@ -2,7 +2,7 @@ from celery import Celery
 
 celery = Celery(
     "tasks",
-    broker="redis://localhost:6379/0",  # Tasks queue
+    broker="redis://localhost:6379/1",  # Tasks queue
 )
 
 celery.conf.update(
