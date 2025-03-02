@@ -20,29 +20,11 @@ class VotingRatings(Base):
     question_id = Column(BigInteger, ForeignKey('questions.id', ondelete='CASCADE'), nullable=False)
     rating = Column(DECIMAL(precision=3, scale=2), nullable=True)
 
-class VotingOptions(Base):
-    __tablename__ = 'voting_options'
+class VotingAnswers(Base):
+    __tablename__ = 'voting_answers'
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     question_id = Column(BigInteger, ForeignKey('questions.id', ondelete='CASCADE'))
     title = Column(String(20), nullable=False)
     description = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.datetime.now)
-
-class NumericAnswers(Base):
-    __tablename__ = 'numeric_answers'
-
-    option_id = Column(BigInteger, ForeignKey('voting_options.id', ondelete='CASCADE'), primary_key=True)
-    value = Column(DECIMAL(precision=10, scale=2), nullable=False)
-
-class TextAnswers(Base):
-    __tablename__ = 'text_answers'
-
-    option_id = Column(BigInteger, ForeignKey('voting_options.id', ondelete='CASCADE'), primary_key=True)
-    value = Column(String(20), nullable=False)
-
-class BooleanAnswers(Base):
-    __tablename__ = 'boolean_answers'
-
-    option_id = Column(BigInteger, ForeignKey('voting_options.id', ondelete='CASCADE'), primary_key=True)
-    value = Column(Boolean, default=False, nullable=False)
