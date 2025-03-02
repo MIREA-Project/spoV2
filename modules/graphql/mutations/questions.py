@@ -1,13 +1,21 @@
 import strawberry
+
+import logging
 from typing import Optional
+
+from sqlalchemy.exc import IntegrityError
+
+from db.models import Questions
 from modules.graphql.types import QuestionsG
-from sqlalchemy import select
+
+from sqlalchemy import insert, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import HTTPException, status
 
 
 # Мутации (Mutations)
 @strawberry.type
-class Mutation:
+class QuestionsMutation:
     # Создание нового вопроса
     @strawberry.mutation(graphql_type=QuestionsG)
     async def create_question(
@@ -23,9 +31,16 @@ class Mutation:
             title=title,
             description=description,
         ).returning(Questions)
-        new_question_chunked = await db_session.execute(new_question_query)
-        await db_session.commit()
-        return new_question_chunked.scalars().first()
+        try:
+            new_question_chunked = await db_session.execute(new_question_query)
+            await db_session.commit()
+            return new_question_chunked.scalars().first()
+
+        except IntegrityError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="User id is wrong"
+            )
 
     # Обновление вопроса
     @strawberry.mutation(graphql_type=Optional[QuestionsG])

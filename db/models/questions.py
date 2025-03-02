@@ -4,6 +4,7 @@ from sqlalchemy import Column, String, BigInteger, Boolean, ForeignKey, DateTime
 
 from db import Base
 
+
 class Questions(Base):
     __tablename__ = 'questions'
 
@@ -13,11 +14,13 @@ class Questions(Base):
     description = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.datetime.now)
 
+
 class QuestionTypes(Base):
     __tablename__ = 'question_types'
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     name = Column(String(20), nullable=False)
+
 
 class QuestionSettings(Base):
     __tablename__ = 'question_settings'

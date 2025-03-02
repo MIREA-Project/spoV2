@@ -1,16 +1,13 @@
 import logging
 from contextlib import asynccontextmanager
-import strawberry
-from strawberry.fastapi import GraphQLRouter
 
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import RedirectResponse
 from db.models import *
 from db import init_models
-from modules.graphql.context import get_context
-from modules.graphql.example import Query, Mutation, graphql_app
+from modules.graphql import graphql_app
 from redis_initializer import init_redis, close_redis
 from modules.reg_module.routes import router
 
@@ -34,8 +31,17 @@ app = FastAPI(
     }
 )
 
-app.add_middleware(
 
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    """logging every request"""
+    logging.info(f"Request: {request.method} {request.url}")
+    response = await call_next(request)
+    logging.info(f"Response status: {response.status_code}")
+    return response
+
+
+app.add_middleware(
     CORSMiddleware,
     allow_origins=['*'],
     allow_credentials=True,
