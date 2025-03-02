@@ -79,5 +79,6 @@ def send_verification_code_by_smtp(email: str, auth_code: int) -> None:
             server.starttls()
             server.login(config.smtp.SMTP_USER, config.smtp.SMTP_PASSWORD)
             server.sendmail(config.smtp.SMTP_USER, email, msg.as_string())
+        logging.info("Отправил код по email")
     except Exception:
         logging.exception("Error while sending verification code")
