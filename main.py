@@ -21,7 +21,7 @@ async def lifespan(app: FastAPI):
     init_redis()
     await init_models()
     yield
-    await close_redis()
+    close_redis()
 
 
 app = FastAPI(
