@@ -2,15 +2,10 @@ import strawberry
 
 import logging
 from typing import Optional
-
-from sqlalchemy.exc import IntegrityError
-
-from db.models import Questions
+from fastapi import HTTPException, status
 from modules.graphql.types import QuestionsG
 
-from sqlalchemy import insert, update, delete
-from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import HTTPException, status
+from modules.repositories.questions import QuestionsRepository
 
 
 # Мутации (Mutations)
@@ -23,36 +18,18 @@ class QuestionsMutation:
             user_id: int,
             title: str,
             description: str,
-            info: strawberry.types.Info
     ):
-        db_session: AsyncSession = info.context.db_session
-        new_question_query = insert(Questions).values(
-            user_id=user_id,
-            title=title,
-            description=description,
-        ).returning(Questions)
-        try:
-            new_question_chunked = await db_session.execute(new_question_query)
-            await db_session.commit()
-            return new_question_chunked.scalars().first()
-
-        except IntegrityError:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="User id is wrong"
-            )
+        return await QuestionsRepository().add_one({"user_id": user_id, "title": title, "description": description})
 
     # Обновление вопроса
     @strawberry.mutation(graphql_type=Optional[QuestionsG])
     async def update_question(
             self,
             question_id: int,
-            info: strawberry.types.Info,
             title: Optional[str] = None,
             description: Optional[str] = None,
 
     ):
-        db_session = info.context.db_session
         # create dict for model
         dict_to_update = {}
         if title:
@@ -60,21 +37,12 @@ class QuestionsMutation:
         if description:
             dict_to_update['description'] = description
 
-        query = update(Questions).where(Questions.id == question_id).values(**dict_to_update).returning(Questions)
-        result = await db_session.execute(query)
-        await db_session.commit()
-        return result.scalars().first()
+        return await QuestionsRepository().update_one(question_id, dict_to_update)
 
     @strawberry.mutation(graphql_type=Optional[QuestionsG])
-    async def delete_question(self, question_id: int, info: strawberry.types.Info) -> bool:
-        db_session = info.context.db_session
+    async def delete_question(self, question_id: int) -> bool:
         try:
-            query = delete(Questions).where(Questions.id == question_id)
-            await db_session.execute(query)
-            await db_session.commit()
-            raise HTTPException(
-                status_code=status.HTTP_204_NO_CONTENT,
-            )
+            return await QuestionsRepository().delete_one(question_id)
         except Exception:
             logging.exception("Failed to delete question")
             raise HTTPException(
