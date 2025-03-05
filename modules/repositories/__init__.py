@@ -42,8 +42,7 @@ class SQLAlchemyAbstractRepository(AbstractRepository):
         async with async_session() as session:
             query = select(self.model)
             chunked_res = await session.execute(query)
-            # res = [row[0].to_schema() for row in chunked_res.all()]
-            return chunked_res.all()
+            return chunked_res.scalars().all()
 
     async def delete_one(self, id_to_delete: int) -> None:
         async with async_session() as session:
