@@ -25,6 +25,12 @@ class QuestionsQuery:
     async def question_types(self):
         return await QuestionTypesRepository().find_all()
 
+    # получение всех настроек всех вопросов
+    @strawberry.field(graphql_type=list[QuestionSettingsG])
+    async def questions_settings(self):
+        return await QuestionSettingsRepository().find_all()
+
+    # получение настроек одного вопроса
     @strawberry.field(graphql_type=Optional[QuestionSettingsG])
     async def question_settings(self, question_id: int):
         return await QuestionSettingsRepository().find_one_by_question_id(question_id)
