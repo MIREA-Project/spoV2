@@ -1,7 +1,7 @@
 import strawberry
 from typing import Optional
-from modules.graphql.types import QuestionsG, QuestionTypesG
-from modules.repositories.questions import QuestionsRepository, QuestionTypesRepository
+from modules.graphql.types import QuestionsG, QuestionTypesG, QuestionSettingsG
+from modules.repositories.questions import QuestionsRepository, QuestionTypesRepository, QuestionSettingsRepository
 
 
 @strawberry.type
@@ -24,3 +24,7 @@ class QuestionsQuery:
     @strawberry.field(graphql_type=list[QuestionTypesG])
     async def question_types(self):
         return await QuestionTypesRepository().find_all()
+
+    @strawberry.field(graphql_type=Optional[QuestionSettingsG])
+    async def question_settings(self, question_id: int):
+        return await QuestionSettingsRepository().find_one_by_question_id(question_id)
