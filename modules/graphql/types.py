@@ -52,3 +52,14 @@ class VotingAnswersG:
     title: str
     description: Optional[str]
     created_at: datetime.datetime
+
+
+@strawberry.type
+class UserInfoG:
+    id: int
+    nickname: str
+    password: str
+    email: str
+    created_at: datetime.datetime
+    correct_vote_count: int
+    score: int
