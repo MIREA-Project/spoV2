@@ -58,7 +58,6 @@ class VotingAnswersG:
 class UserInfoG:
     id: int
     nickname: str
-    password: str
     email: str
     created_at: datetime.datetime
     correct_vote_count: int
