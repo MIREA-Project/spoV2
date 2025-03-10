@@ -69,8 +69,30 @@ class SQLAlchemyAbstractRepository(AbstractRepository):
             chunked_res = await session.execute(query)
             await session.commit()
             return chunked_res.fetchone()[0]
+    
+    async def update_by(self, id_to_update: int, data: dict, by:FindBy):
+        query = None
+        if by.value == 'question_id':
+            query = update(self.model).where(self.model.question_id == id_to_update).values(**data).returning(self.model)
+        elif by.value == 'user_id':
+            query = update(self.model).where(self.model.user_id == id_to_update).values(**data).returning(self.model)
+        async with async_session() as session:
+            chunked_res = await session.execute(query)
+            await session.commit()
+            return chunked_res.fetchone()[0]
+    
+    async def delete_by(self, id_to_delete: int, by:FindBy):
+        query = None
+        if by.value == 'question_id':
+            query = delete(self.model).where(self.model.question_id == id_to_delete).returning(self.model)
+        elif by.value == 'user_id':
+            query = delete(self.model).where(self.model.user_id == id_to_delete).returning(self.model)
+        async with async_session() as session:
+            chunked_res = await session.execute(query)
+            await session.commit()
+            return chunked_res.all()
         
-    async def find_by(self,id_to_find:int, by:FindBy):
+    async def find_by(self, id_to_find:int, by:FindBy):
         query = None
         if by.value == 'question_id':
             query = select(self.model).where(self.model.question_id == id_to_find)

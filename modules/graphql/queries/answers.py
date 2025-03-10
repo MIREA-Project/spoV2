@@ -3,6 +3,8 @@ from typing import Optional
 from modules.graphql.types import UserAnswersG, VotingRatingsG, VotingAnswersG
 from modules.repositories.answers import UserAnswersRepository, VotingRatingsRepository, VotingAnswersRepository
 from modules.repositories import FindBy
+
+
 @strawberry.type
 class AnswersQuery:
     @strawberry.field(graphql_type=list[UserAnswersG])
