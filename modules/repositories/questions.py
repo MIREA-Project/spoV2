@@ -16,9 +16,3 @@ class QuestionTypesRepository(SQLAlchemyAbstractRepository):
 
 class QuestionSettingsRepository(SQLAlchemyAbstractRepository):
     model = QuestionSettings
-
-    async def find_one_by_question_id(self, id_to_find: int) -> Optional[int]:
-        async with async_session() as session:
-            query = select(self.model).where(self.model.question_id == id_to_find)
-            chunked_res = await session.execute(query)
-            return chunked_res.fetchone()[0]

@@ -6,7 +6,7 @@ from modules.repositories.users import UsersInfoRepository
 
 @strawberry.type
 class UserInfoQuery:
-    @strawberry.field(graphql_type=Optional[UserInfoG])
+    @strawberry.field(graphql_type=list[UserInfoG])
     async def user(self, user_id: int):
         return await UsersInfoRepository().find_one(user_id)
     

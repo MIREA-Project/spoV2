@@ -2,13 +2,15 @@ import strawberry
 from typing import Optional
 from modules.graphql.types import QuestionsG, QuestionTypesG, QuestionSettingsG
 from modules.repositories.questions import QuestionsRepository, QuestionTypesRepository, QuestionSettingsRepository
-
+from modules.repositories import FindBy
 
 @strawberry.type
 class QuestionsQuery:
-    @strawberry.field(graphql_type=Optional[QuestionsG])
+    @strawberry.field(graphql_type=list[QuestionsG])
     async def question(self, question_id: int):
-        return await QuestionsRepository().find_one(question_id)
+        a = await QuestionsRepository().find_one(question_id)
+        print(a)
+        return a
 
     # Получение всех вопросов
     @strawberry.field(graphql_type=list[QuestionsG])
@@ -16,7 +18,7 @@ class QuestionsQuery:
         return await QuestionsRepository().find_all()
 
     # Получение типа вопроса по ID
-    @strawberry.field(graphql_type=Optional[QuestionTypesG])
+    @strawberry.field(graphql_type=list[QuestionTypesG])
     async def question_type(self, type_id: int):
         return await QuestionTypesRepository().find_one(type_id)
 
@@ -31,6 +33,6 @@ class QuestionsQuery:
         return await QuestionSettingsRepository().find_all()
 
     # получение настроек одного вопроса
-    @strawberry.field(graphql_type=Optional[QuestionSettingsG])
+    @strawberry.field(graphql_type=list[QuestionSettingsG])
     async def question_settings(self, question_id: int):
-        return await QuestionSettingsRepository().find_one_by_question_id(question_id)
+        return await QuestionSettingsRepository().find_by(question_id, FindBy.question_id)
