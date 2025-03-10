@@ -2,18 +2,18 @@ import strawberry
 from strawberry.fastapi import GraphQLRouter
 
 from modules.graphql.context import get_context
-from .queries import QuestionsQuery
-from .mutations import QuestionsMutation
+from .queries import QuestionsQuery, UserInfoQuery, AnswersQuery
+from .mutations import QuestionsMutation, UsersMutation
 
 
 # add graphql router
 @strawberry.type
-class Query(QuestionsQuery):
+class Query(QuestionsQuery, UserInfoQuery, AnswersQuery):
     pass
 
 
 @strawberry.type
-class Mutation(QuestionsMutation):
+class Mutation(QuestionsMutation, UsersMutation):
     pass
 
 
