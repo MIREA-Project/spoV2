@@ -15,7 +15,7 @@ DATABASE_PASSWORD = os.getenv('DATABASE_PASSWORD')
 
 DATABASE_URL = f"postgresql+asyncpg://{DATABASE_USERNAME}:{DATABASE_PASSWORD}@{DATABASE_HOST}:{DATABASE_PORT}/{DATABASE_NAME}"
 
-engine = create_async_engine(DATABASE_URL, echo=True)
+engine = create_async_engine(DATABASE_URL, echo=False)
 Base = declarative_base()
 async_session = sessionmaker(
     engine,

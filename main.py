@@ -59,5 +59,5 @@ async def redirect_to_doc():
 
 
 if __name__ == '__main__':
-    uvicorn.run(app, host="192.168.1.167", port=60575)
+    uvicorn.run(app, host="localhost", port=60575)
 
