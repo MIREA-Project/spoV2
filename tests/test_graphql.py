@@ -2,6 +2,7 @@ import pytest
 from httpx import AsyncClient, ASGITransport
 from main import app
 
+
 class TestAnswersQuery:
     @pytest.mark.asyncio
     async def test_answer(self):
@@ -45,24 +46,24 @@ class TestAnswersQuery:
             assert "answers" in response.json()["data"]
 
     @pytest.mark.asyncio
-    async def test_create_answer(self):
+    async def test_create_question(self):
         async with AsyncClient(transport=ASGITransport(app=app)) as client:
             response = await client.post("http://127.0.0.1:8000/graphql", json={
                 "query": """
                 mutation {
-                    createAnswer(input: {questionId: 1, userId: 1, scoreAwarded: 10}) {
+                    createQuestion(description : "fake description", title: "fake title", userId:1) {
+                       createdAt
+                        description
                         id
-                        questionId
+                        title
                         userId
-                        createdAt
-                        scoreAwarded
                     }
                 }
                 """
             })
             assert response.status_code == 200
             assert "data" in response.json()
-            assert "createAnswer" in response.json()["data"]
+            assert "createQuestion" in response.json()["data"]
 
     @pytest.mark.asyncio
     async def test_update_answer(self):
@@ -234,119 +235,119 @@ class TestAnswersQuery:
             assert "errors" in response.json()
 
 #     # Повторяем шаблон для оставшихся тестов
-#     for i in range(3, 11):
-#         exec(f'''
-# @pytest.mark.asyncio
-# async def test_answer_{i}(self):
-#     async with AsyncClient(transport=ASGITransport(app=app)) as client:
-#         response = await client.post("http://127.0.0.1:8000/graphql", json={{
-#             "query": "{{ answer(answerId: {i}) {{ id questionId userId createdAt scoreAwarded }} }}"
-#         }})
-#         assert response.status_code == 200
-#         assert "data" in response.json()
-#         assert "answer" in response.json()["data"]
-#
-# @pytest.mark.asyncio
-# async def test_answers_one_user_id_{i}(self):
-#     async with AsyncClient(transport=ASGITransport(app=app)) as client:
-#         response = await client.post("http://127.0.0.1:8000/graphql", json={{
-#             "query": "{{ answersOneUserId(userId: {i}) {{ id questionId userId createdAt scoreAwarded }} }}"
-#         }})
-#         assert response.status_code == 200
-#         assert "data" in response.json()
-#         assert "answersOneUserId" in response.json()["data"]
-#
-# @pytest.mark.asyncio
-# async def test_answers_one_question_id_{i}(self):
-#     async with AsyncClient(transport=ASGITransport(app=app)) as client:
-#         response = await client.post("http://127.0.0.1:8000/graphql", json={{
-#             "query": "{{ answersOneQuestionId(questionId: {i}) {{ id questionId userId createdAt scoreAwarded }} }}"
-#         }})
-#         assert response.status_code == 200
-#         assert "data" in response.json()
-#         assert "answersOneQuestionId" in response.json()["data"]
-#
-# @pytest.mark.asyncio
-# async def test_all_answers_{i}(self):
-#     async with AsyncClient(transport=ASGITransport(app=app)) as client:
-#         response = await client.post("http://127.0.0.1:8000/graphql", json={{
-#             "query": "{{ allAnswers {{ id questionId userId createdAt scoreAwarded }} }}"
-#         }})
-#         assert response.status_code == 200
-#         assert "data" in response.json()
-#         assert "allAnswers" in response.json()["data"]
-#
-# @pytest.mark.asyncio
-# async def test_create_answer_{i}(self):
-#     async with AsyncClient(transport=ASGITransport(app=app)) as client:
-#         response = await client.post("http://127.0.0.1:8000/graphql", json={{
-#             "query": """
-#             mutation {{
-#                 createAnswer(input: {{questionId: {i}, userId: {i}, scoreAwarded: {i*10}}}) {{
-#                     id
-#                     questionId
-#                     userId
-#                     createdAt
-#                     scoreAwarded
-#                 }}
-#             }}
-#             """
-#         }})
-#         assert response.status_code == 200
-#         assert "data" in response.json()
-#         assert "createAnswer" in response.json()["data"]
-#
-# @pytest.mark.asyncio
-# async def test_update_answer_{i}(self):
-#     async with AsyncClient(transport=ASGITransport(app=app)) as client:
-#         response = await client.post("http://127.0.0.1:8000/graphql", json={{
-#             "query": """
-#             mutation {{
-#                 updateAnswer(id: {i}, input: {{scoreAwarded: {i*20}}}) {{
-#                     id
-#                     questionId
-#                     userId
-#                     createdAt
-#                     scoreAwarded
-#                 }}
-#             }}
-#             """
-#         }})
-#         assert response.status_code == 200
-#         assert "data" in response.json()
-#         assert "updateAnswer" in response.json()["data"]
-#
-# @pytest.mark.asyncio
-# async def test_delete_answer_{i}(self):
-#     async with AsyncClient(transport=ASGITransport(app=app)) as client:
-#         response = await client.post("http://127.0.0.1:8000/graphql", json={{
-#             "query": """
-#             mutation {{
-#                 deleteAnswer(id: {i}) {{
-#                     id
-#                 }}
-#             }}
-#             """
-#         }})
-#         assert response.status_code == 200
-#         assert "data" in response.json()
-#         assert "deleteAnswer" in response.json()["data"]
-#
-# @pytest.mark.asyncio
-# async def test_answer_not_found_{i}(self):
-#     async with AsyncClient(transport=ASGITransport(app=app)) as client:
-#         response = await client.post("http://127.0.0.1:8000/graphql", json={{
-#             "query": "{{ answer(answerId: {1000+i}) {{ id questionId userId createdAt scoreAwarded }} }}"
-#         }})
-#         assert response.status_code == 200
-#         assert "errors" in response.json()
-#
-# @pytest.mark.asyncio
-# async def test_invalid_query_{i}(self):
-#     async with AsyncClient(transport=ASGITransport(app=app)) as client:
-#         response = await client.post("http://127.0.0.1:8000/graphql", json={{
-#             "query": "{{ invalidQuery {{ id }} }}"
-#         }})
-#         assert response.status_code == 400
-#         assert "errors" in response.json()
-#         ''')
+    for i in range(3, 11):
+        exec(f'''
+@pytest.mark.asyncio
+async def test_answer_{i}(self):
+    async with AsyncClient(transport=ASGITransport(app=app)) as client:
+        response = await client.post("http://127.0.0.1:8000/graphql", json={{
+            "query": "{{ answer(answerId: {i}) {{ id questionId userId createdAt scoreAwarded }} }}"
+        }})
+        assert response.status_code == 200
+        assert "data" in response.json()
+        assert "answer" in response.json()["data"]
+
+@pytest.mark.asyncio
+async def test_answers_one_user_id_{i}(self):
+    async with AsyncClient(transport=ASGITransport(app=app)) as client:
+        response = await client.post("http://127.0.0.1:8000/graphql", json={{
+            "query": "{{ answersOneUserId(userId: {i}) {{ id questionId userId createdAt scoreAwarded }} }}"
+        }})
+        assert response.status_code == 200
+        assert "data" in response.json()
+        assert "answersOneUserId" in response.json()["data"]
+
+@pytest.mark.asyncio
+async def test_answers_one_question_id_{i}(self):
+    async with AsyncClient(transport=ASGITransport(app=app)) as client:
+        response = await client.post("http://127.0.0.1:8000/graphql", json={{
+            "query": "{{ answersOneQuestionId(questionId: {i}) {{ id questionId userId createdAt scoreAwarded }} }}"
+        }})
+        assert response.status_code == 200
+        assert "data" in response.json()
+        assert "answersOneQuestionId" in response.json()["data"]
+
+@pytest.mark.asyncio
+async def test_all_answers_{i}(self):
+    async with AsyncClient(transport=ASGITransport(app=app)) as client:
+        response = await client.post("http://127.0.0.1:8000/graphql", json={{
+            "query": "{{ allAnswers {{ id questionId userId createdAt scoreAwarded }} }}"
+        }})
+        assert response.status_code == 200
+        assert "data" in response.json()
+        assert "allAnswers" in response.json()["data"]
+
+@pytest.mark.asyncio
+async def test_create_answer_{i}(self):
+    async with AsyncClient(transport=ASGITransport(app=app)) as client:
+        response = await client.post("http://127.0.0.1:8000/graphql", json={{
+            "query": """
+            mutation {{
+                createAnswer(input: {{questionId: {i}, userId: {i}, scoreAwarded: {i*10}}}) {{
+                    id
+                    questionId
+                    userId
+                    createdAt
+                    scoreAwarded
+                }}
+            }}
+            """
+        }})
+        assert response.status_code == 200
+        assert "data" in response.json()
+        assert "createAnswer" in response.json()["data"]
+
+@pytest.mark.asyncio
+async def test_update_answer_{i}(self):
+    async with AsyncClient(transport=ASGITransport(app=app)) as client:
+        response = await client.post("http://127.0.0.1:8000/graphql", json={{
+            "query": """
+            mutation {{
+                updateAnswer(id: {i}, input: {{scoreAwarded: {i*20}}}) {{
+                    id
+                    questionId
+                    userId
+                    createdAt
+                    scoreAwarded
+                }}
+            }}
+            """
+        }})
+        assert response.status_code == 200
+        assert "data" in response.json()
+        assert "updateAnswer" in response.json()["data"]
+
+@pytest.mark.asyncio
+async def test_delete_answer_{i}(self):
+    async with AsyncClient(transport=ASGITransport(app=app)) as client:
+        response = await client.post("http://127.0.0.1:8000/graphql", json={{
+            "query": """
+            mutation {{
+                deleteAnswer(id: {i}) {{
+                    id
+                }}
+            }}
+            """
+        }})
+        assert response.status_code == 200
+        assert "data" in response.json()
+        assert "deleteAnswer" in response.json()["data"]
+
+@pytest.mark.asyncio
+async def test_answer_not_found_{i}(self):
+    async with AsyncClient(transport=ASGITransport(app=app)) as client:
+        response = await client.post("http://127.0.0.1:8000/graphql", json={{
+            "query": "{{ answer(answerId: {1000+i}) {{ id questionId userId createdAt scoreAwarded }} }}"
+        }})
+        assert response.status_code == 200
+        assert "errors" in response.json()
+
+@pytest.mark.asyncio
+async def test_invalid_query_{i}(self):
+    async with AsyncClient(transport=ASGITransport(app=app)) as client:
+        response = await client.post("http://127.0.0.1:8000/graphql", json={{
+            "query": "{{ invalidQuery {{ id }} }}"
+        }})
+        assert response.status_code == 400
+        assert "errors" in response.json()
+        ''')

@@ -8,6 +8,7 @@ from modules.graphql.types import QuestionsG, QuestionTypesG, QuestionSettingsG
 from modules.repositories.questions import QuestionsRepository, QuestionTypesRepository, QuestionSettingsRepository
 from modules.repositories import FindBy
 
+
 # Мутации (Mutations)
 @strawberry.type
 class QuestionsMutation:
@@ -50,21 +51,21 @@ class QuestionsMutation:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to delete question",
             )
-    
+
     # Создание нового типа вопроса
     @strawberry.mutation(graphql_type=QuestionTypesG)
     async def create_question_type(self, name: str):
         return await QuestionTypesRepository().add_one({"name": name})
-    
+
     # Обновлние типа вопроса
     @strawberry.mutation(graphql_type=Optional[QuestionTypesG])
     async def update_question_type(self, type_id: int, name: Optional[str] = None):
         dict_to_update = {}
         if name:
             dict_to_update['name'] = name
-        
+
         return await QuestionTypesRepository().update_one(type_id, dict_to_update)
-    
+
     # удаление типа вопроса
     @strawberry.mutation(graphql_type=Optional[QuestionTypesG])
     async def delete_question_type(self, type_id: int):
@@ -86,22 +87,22 @@ class QuestionsMutation:
             is_anonymous: bool,
             is_closed: bool
     ):
-        
+
         return await QuestionSettingsRepository().add_one({
             "question_id": question_id,
             "question_type_id": question_type_id,
             "is_anonymous": is_anonymous,
             "is_closed": is_closed
         })
-    
+
     # Обновление настроек вопроса
     @strawberry.mutation(graphql_type=Optional[QuestionSettingsG])
     async def update_question_settings(
-        self,
-        question_id: int,
-        question_type_id: Optional[int] = None,
-        is_anonymous: Optional[bool] = None,
-        is_closed: Optional[bool] = None
+            self,
+            question_id: int,
+            question_type_id: Optional[int] = None,
+            is_anonymous: Optional[bool] = None,
+            is_closed: Optional[bool] = None
     ):
         dict_to_update = {}
         if question_type_id:
@@ -110,9 +111,9 @@ class QuestionsMutation:
             dict_to_update['is_anonymous'] = is_anonymous
         if is_closed:
             dict_to_update['is_closed'] = is_closed
-        
+
         return await QuestionSettingsRepository().update_by(question_id, dict_to_update, FindBy.question_id)
-    
+
     # Удаление настроек вопроса
     @strawberry.mutation(graphql_type=Optional[QuestionSettingsG])
     async def delete_question_settings(self, question_id: int):

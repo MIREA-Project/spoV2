@@ -55,7 +55,7 @@ class SQLAlchemyAbstractRepository(AbstractRepository):
             query = delete(self.model).where(self.model.id == id_to_delete).returning(self.model)
             chunked_res = await session.execute(query)
             await session.commit()
-            return chunked_res.all()
+            return chunked_res.scalar()
 
     async def find_one(self, id_to_find: int) -> Optional[int]:
         async with async_session() as session:
