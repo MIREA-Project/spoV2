@@ -70,6 +70,30 @@ class SQLAlchemyAbstractRepository(AbstractRepository):
             await session.commit()
             return chunked_res.fetchone()[0]
     
+    async def delete_one_two_id(self, user_id: int, question_id: int) -> None:
+        async with async_session() as session:
+            query = (
+                delete(self.model)
+                .where(self.model.user_id == user_id, self.model.question_id == question_id)
+                .returning(self.model)
+            )
+            chunked_res = await session.execute(query)
+            await session.commit()
+            return chunked_res.all()
+
+    
+    async def update_one_two_id(self, user_id: int, question_id: int, data: dict) -> None:
+        async with async_session() as session:
+            query = (
+                update(self.model)
+                .where(self.model.user_id == user_id, self.model.question_id == question_id)
+                .values(**data)
+                .returning(self.model)
+            )
+            chunked_res = await session.execute(query)
+            await session.commit()
+            return chunked_res.fetchone()[0]
+
     async def update_by(self, id_to_update: int, data: dict, by:FindBy):
         query = None
         if by.value == 'question_id':
