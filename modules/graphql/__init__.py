@@ -3,7 +3,7 @@ from strawberry.fastapi import GraphQLRouter
 
 from modules.graphql.context import get_context
 from .queries import QuestionsQuery, UserInfoQuery, AnswersQuery
-from .mutations import QuestionsMutation, UsersMutation
+from .mutations import QuestionsMutation, UsersMutation, AnswersMutation
 
 
 # add graphql router
@@ -13,7 +13,7 @@ class Query(QuestionsQuery, UserInfoQuery, AnswersQuery):
 
 
 @strawberry.type
-class Mutation(QuestionsMutation, UsersMutation):
+class Mutation(QuestionsMutation, UsersMutation, AnswersMutation):
     pass
 
 
