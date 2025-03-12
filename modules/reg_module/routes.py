@@ -27,16 +27,22 @@ async def add_new_user(
         session: AsyncSession = Depends(get_session)
 ) -> schemas.SuccessMessageSend:
     try:
-        if new_user := await db.create_user(user_model, session):
-            send_verification_code.delay(new_user.email)
-            return schemas.SuccessMessageSend(
-                message="Verification code sent successfully",
+        new_user = await db.create_user(user_model, session)
+        if not new_user:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Failed to create user"
             )
-    except Exception:
+        
+        send_verification_code.delay(new_user.email)
+        return schemas.SuccessMessageSend(
+            message="Verification code sent successfully",
+        )
+    except Exception as e:
         logging.exception("Failed to add new user")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Cant create user"
+            detail="Can't create user: {}".format(str(e))
         )
 
 
@@ -67,62 +73,48 @@ async def verify_code(
         session: AsyncSession = Depends(get_session)
 ) -> schemas.SuccessMessageSend:
     """
-    second authorization handler, user has received the code, and will enter it to form with code
-    set cookies with access and refresh token with httpOnly
-    :param response: base fastapi response
-    :param user_auth_info: validated user information
-    :param session: sqlalchemy session
-    :return: None(only set cookies)
-    :raise HTTPException 410 (when code not found in redis)
-    :raise HTTPException 403 (when code is wrong)
+    Second authorization handler, user has received the code, and will enter it to form with code.
+    Set cookies with access and refresh token with httpOnly.
     """
-    redis_client = get_redis()
-    # get code from redis using email
-    backend_code_from_user = redis_client.get(
-        user_auth_info.email
-    )
+    redis_client = await get_redis()
+    backend_code_from_user = await redis_client.get(user_auth_info.email)
     if backend_code_from_user is None:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Code lifetime is expired"
         )
-    # using to avoid time attack
     if not hmac.compare_digest(backend_code_from_user, str(user_auth_info.code)):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail='Wrong code'
         )
-    # delete code from redis
-    redis_client.delete(user_auth_info.email)
-    # get user from db
+    await redis_client.delete(user_auth_info.email)
     try:
         user: models.User = await db.get_user(user_auth_info.email, session)
     except Exception:
-        logging.exception("Erorr while get user while code verifying")
+        logging.exception("Error while getting user during code verification")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Something went wrong while code verification"
+            detail="Something went wrong during code verification"
         )
-    # user auth success!
-    # create jwt tokens
+    
     access_token: str = create_access_token(user=schemas.User(**user.__dict__))
     refresh_token: str = create_refresh_token(user.id)
 
-    # set jwt tokens in cookies
     response.set_cookie(
         key=jwt_schemas.TokenType.access_token.value,
         value=access_token,
         httponly=True,
-        secure=False,  # MAKE TRUE ON PRODUCTION
+        secure=False,
     )
     response.set_cookie(
         key=jwt_schemas.TokenType.refresh_token.value,
         value=refresh_token,
         httponly=True,
-        secure=False,  # MAKE TRUE ON PRODUCTION
+        secure=False,
     )
     return schemas.SuccessMessageSend(
-        message="Auth success, cookies was set!",
+        message="Auth success, cookies were set!",
     )
 
 
@@ -139,7 +131,12 @@ async def get_new_access_token(
     """
     # get user from database
     ### CRUD USER GETTER
-    # user = database[user_id]
+    user = await db.get_user_by_id(user_id)  # Replace with your actual CRUD function
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
 
     # set jwt
     access_token = create_access_token(user=user)
