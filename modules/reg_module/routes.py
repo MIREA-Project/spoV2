@@ -76,8 +76,8 @@ async def verify_code(
     Second authorization handler, user has received the code, and will enter it to form with code.
     Set cookies with access and refresh token with httpOnly.
     """
-    redis_client = await get_redis()
-    backend_code_from_user = await redis_client.get(user_auth_info.email)
+    redis_client = get_redis()
+    backend_code_from_user = redis_client.get(user_auth_info.email)
     if backend_code_from_user is None:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -88,7 +88,7 @@ async def verify_code(
             status_code=status.HTTP_403_FORBIDDEN,
             detail='Wrong code'
         )
-    await redis_client.delete(user_auth_info.email)
+    redis_client.delete(user_auth_info.email)
     try:
         user: models.User = await db.get_user(user_auth_info.email, session)
     except Exception:
