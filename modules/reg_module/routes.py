@@ -5,6 +5,11 @@ from fastapi import Depends, status, HTTPException, Response, APIRouter
 from redis import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from core.config import load_config
+
+from langchain_community.chat_models import GigaChat
+from sqlalchemy import select
+from db.models import *
 from db import get_session, models
 from redis_initializer import get_redis
 from . import schemas
@@ -14,6 +19,8 @@ from .jwt_module.creator import create_access_token, create_refresh_token
 from .jwt_module.depends import get_user_from_token, get_user_id_from_refresh_token
 from .utils import send_verification_code
 from . import crud as db
+
+config = load_config()
 
 router: APIRouter = APIRouter(
     prefix="/auth",
@@ -181,3 +188,69 @@ async def start_page(
     :return:
     """
     return {"status": "success"}
+
+
+@router.get("/get_stat")
+async def get_stat_llm( question_id: int,
+                       session:AsyncSession = Depends(get_session)
+):
+    query = (
+    select(
+        Questions.title.label("question_title"),
+        Questions.description.label("question_description"),
+        VotingAnswers.title.label("voting_answer_title")
+    )
+    .select_from(Questions)
+    .join(VotingAnswers, Questions.id == VotingAnswers.question_id)
+    .where(Questions.id == question_id)
+    )
+    chunked_res = await session.execute(query)
+    res = chunked_res.mappings().all()
+
+    chat = GigaChat(
+        credentials=config.gpt_token,
+        scope="GIGACHAT_API_PERS",
+        verify_ssl_certs=False,
+        profanity=True,
+        timeout=600
+    )
+    
+    if res:
+        # Берем первый элемент для question_title и question_description
+        question_title = res[0]["question_title"]
+        question_description = res[0]["question_description"]
+
+        # Собираем все voting_answer_title в список
+        voting_answer_titles = [row["voting_answer_title"] for row in res]
+
+        # Формируем итоговую структуру
+        formatted_result = {
+            "question_title": question_title,
+            "question_description": question_description,
+            "voting_answer_titles": voting_answer_titles,
+        }
+
+        # Форматируем user_prompt
+        user_prompt = '''Тебе нужно ответить на вопрос. Тебе на вход подается следующая информация:
+            Вопрос: {question_info}
+            Тут следующая информация:
+            question_title: Вопрос
+            question_description: Его описание
+            voting_answer_titles: Варианты ответов
+            В ответе тебе нужно указать только один из предложенных ответов на вопрос
+            В формате:
+            Ответ LLM:
+            '''.format(question_info=formatted_result)
+        
+        system_prompt = "Ты — Олег, русскоязычный автоматический ассистент. Ты разговариваешь с людьми и помогаешь им. Отвечай только строго по контексту одним предложением."
+        
+        messages = [
+            {'role': 'system', 'content': system_prompt},
+            {'role': 'user', 'content': user_prompt}
+        ]
+
+        response = chat.invoke(messages)
+
+        return {"status": "success", "response": response.content}
+    else:
+        return {"status": "error", "message": "No data found for the given question_id"}

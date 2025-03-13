@@ -32,6 +32,7 @@ class Config(BaseModel):
     project_host: str
     jwt: AuthJWT
     smtp: SMTPConfig
+    gpt_token: str
 
     @field_validator("project_host")
     def validate_host(cls, value):
@@ -61,5 +62,6 @@ def load_config() -> Config:
             SMTP_PORT=int(os.getenv("SMTP_PORT")),
             SMTP_USER=os.getenv("SMTP_USER"),
             SMTP_PASSWORD=os.getenv("SMTP_PASSWORD"),
-        )
+        ),
+        gpt_token=os.getenv("CHAT_GPT_TOKEN")
     )
