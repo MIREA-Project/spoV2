@@ -1,5 +1,7 @@
 # README
-
+## Project description
+Vote&Go is a forecasting platform inspired by Polymarket, but focused on technological developments. Users can create and make predictions about the outcomes in the IT world: the release of Python 4, vulnerabilities in popular libraries, the launch of new products from Google/Microsoft, deadlines for the end of development of large open-source projects, etc.
+## Starting project
 1. Download python
 2. Clone project
 3. Activate venv (python3.12)
